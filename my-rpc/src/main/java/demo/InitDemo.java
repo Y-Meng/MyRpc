@@ -7,6 +7,10 @@ import com.mcy.rpc.util.Configure;
  */
 public class InitDemo {
 
+    public static void initServer(){
+
+    }
+
     public static void main(String[] args){
         new Configure();
     }

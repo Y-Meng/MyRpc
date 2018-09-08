@@ -21,19 +21,18 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * @author zkzc-mcy create at 2018/8/24.
  */
-public class RpcConsumerImpl implements RpcConsumer,InvocationHandler {
+public class RpcConsumerImpl extends RpcConsumer {
 
     private static AtomicLong callTimes = new AtomicLong(0L);
     private RpcConnection connection;
-    private List<RpcConnection> connection_list;
+    private List<RpcConnection> connectionList;
     private Map<String, ResponseCallbackListener> asyncMethods;
-    private Class<?> interfaceClass;
-    private String version;
-    private int timeout;
+
+
     private ConsumerHook hook;
 
     public Class<?> getInterfaceClass() {
-        return interfaceClass;
+        return interfaceClazz;
     }
 
     public String getVersion() {
@@ -50,26 +49,29 @@ public class RpcConsumerImpl implements RpcConsumer,InvocationHandler {
     }
 
     RpcConnection select() {
-        Random rd = new Random(System.currentTimeMillis());
-        int d = (int) (callTimes.getAndIncrement() % (connection_list.size() + 1));
+        // Random rd = new Random(System.currentTimeMillis());
+        int d = (int) (callTimes.getAndIncrement() % (connectionList.size() + 1));
         if (d == 0) {
             return connection;
         } else {
-            return connection_list.get(d - 1);
+            return connectionList.get(d - 1);
         }
     }
 
     public RpcConsumerImpl() {
-        String ip = Configure.getInstance().getIp();
-        this.asyncMethods = new HashMap<String, ResponseCallbackListener>();
-        this.connection = new RpcNettyConnection(ip, 8888);
+        
+        super(new Configure());
+
+        this.asyncMethods = new HashMap();
+        this.connection = new RpcNettyConnection(configure.getServerIp(), configure.getServerPort());
         this.connection.connect();
-        connection_list = new ArrayList<RpcConnection>();
+        this.connectionList = new ArrayList();
         int num = Runtime.getRuntime().availableProcessors() / 3 - 2;
+        
         for (int i = 0; i < num; i++) {
-            connection_list.add(new RpcNettyConnection(ip, 8888));
+            connectionList.add(new RpcNettyConnection(configure.getServerIp(), configure.getServerPort()));
         }
-        for (RpcConnection conn : connection_list) {
+        for (RpcConnection conn : connectionList) {
             conn.connect();
         }
     }
@@ -89,24 +91,6 @@ public class RpcConsumerImpl implements RpcConsumer,InvocationHandler {
     }
 
     @Override
-    public RpcConsumer interfaceClass(Class<?> interfaceClass) {
-        this.interfaceClass = interfaceClass;
-        return this;
-    }
-
-    @Override
-    public RpcConsumer version(String version) {
-        this.version = version;
-        return this;
-    }
-
-    @Override
-    public RpcConsumer clientTimeout(int clientTimeout) {
-        this.timeout = clientTimeout;
-        return this;
-    }
-
-    @Override
     public RpcConsumer hook(ConsumerHook hook) {
         this.hook = hook;
         return this;
@@ -115,7 +99,7 @@ public class RpcConsumerImpl implements RpcConsumer,InvocationHandler {
     @Override
     public Object instance() {
         try {
-            return proxy(this.interfaceClass);
+            return proxy(this.interfaceClazz);
         } catch (Throwable e) {
             e.printStackTrace();
         }
@@ -123,24 +107,24 @@ public class RpcConsumerImpl implements RpcConsumer,InvocationHandler {
     }
 
     @Override
-    public void asynCall(String methodName) {
-        asynCall(methodName, null);
+    public void asyncCall(String methodName) {
+        asyncCall(methodName, null);
     }
 
     @Override
-    public <T extends ResponseCallbackListener> void asynCall(String methodName, T callbackListener) {
+    public <T extends ResponseCallbackListener> void asyncCall(String methodName, T callbackListener) {
         this.asyncMethods.put(methodName, callbackListener);
         this.connection.setAsyncMethod(asyncMethods);
-        for (RpcConnection conn : connection_list) {
+        for (RpcConnection conn : connectionList) {
             conn.setAsyncMethod(asyncMethods);
         }
     }
 
     @Override
-    public void cancelAsyn(String methodName) {
+    public void cancelAsync(String methodName) {
         this.asyncMethods.remove(methodName);
         this.connection.setAsyncMethod(asyncMethods);
-        for (RpcConnection conn : connection_list) {
+        for (RpcConnection conn : connectionList) {
             conn.setAsyncMethod(asyncMethods);
         }
     }
@@ -152,19 +136,20 @@ public class RpcConsumerImpl implements RpcConsumer,InvocationHandler {
             parameterTypes.add(parameterType.getName());
         }
         RpcRequest request = new RpcRequest();
+
         request.setRequestId(UUID.randomUUID().toString());
         request.setClassName(method.getDeclaringClass().getName());
         request.setMethodName(method.getName());
-        request.setParameterTypes(method.getParameterTypes());
+        request.setParameters(method.getParameterTypes());
         request.setParameters(args);
         if (hook != null) hook.before(request);
         RpcResponse response = null;
         try {
-            request.setContext(RpcContext.props);
-            response = (RpcResponse) select().Send(request, asyncMethods.containsKey(request.getMethodName()));
+            request.setContext(RpcContext.getProps());
+            response = select().Send(request, asyncMethods.containsKey(request.getMethodName()));
             if (hook != null) hook.after(request);
-            if (!asyncMethods.containsKey(request.getMethodName()) && response.getExption() != null) {
-                Throwable e = (Throwable) Tool.deserialize(response.getExption(), response.getClazz());
+            if (!asyncMethods.containsKey(request.getMethodName()) && response.getException() != null) {
+                Throwable e = Tool.deserialize(response.getException(), response.getClazz());
                 throw e.getCause();
             }
         } catch (Throwable t) {
@@ -172,9 +157,11 @@ public class RpcConsumerImpl implements RpcConsumer,InvocationHandler {
             throw t;
         } finally {
             if (asyncMethods.containsKey(request.getMethodName()) && asyncMethods.get(request.getMethodName()) != null) {
-                cancelAsyn(request.getMethodName());
+                cancelAsync(request.getMethodName());
             }
-        } if (response == null) {
+        }
+
+        if (response == null) {
             return null;
         } else if (response.getErrorMsg() != null) {
             throw response.getErrorMsg();

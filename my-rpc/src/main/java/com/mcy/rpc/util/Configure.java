@@ -11,11 +11,16 @@ import java.util.Properties;
  */
 public class Configure {
 
-    static final String DEFAULT_CONFIG = "rpc-consumer.properties";
+    static final String DEFAULT_CONFIG = "my-rpc.properties";
 
-    Properties properties;
-    private static Configure instance;
-    private String ip;
+    private Properties properties;
+
+    // server 配置
+    private int listen;
+
+    // client 配置
+    private String serverIp;
+    private int serverPort;
 
     public Configure() {
         try {
@@ -30,10 +35,6 @@ public class Configure {
         initValues(properties);
     }
 
-    public static Configure getInstance() {
-        return instance;
-    }
-
     private void init() throws IOException {
         URL url = getClass().getResource("/");
         File file = new File(url.getPath() + DEFAULT_CONFIG);
@@ -44,9 +45,30 @@ public class Configure {
 
     private void initValues(Properties properties) {
         System.out.println(properties);
+
     }
 
-    public String getIp() {
-        return ip;
+    public int getListen() {
+        return listen;
+    }
+
+    public void setListen(int listen) {
+        this.listen = listen;
+    }
+
+    public String getServerIp() {
+        return serverIp;
+    }
+
+    public void setServerIp(String serverIp) {
+        this.serverIp = serverIp;
+    }
+
+    public int getServerPort() {
+        return serverPort;
+    }
+
+    public void setServerPort(int serverPort) {
+        this.serverPort = serverPort;
     }
 }

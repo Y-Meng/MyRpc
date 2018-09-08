@@ -2,25 +2,57 @@ package com.mcy.rpc.api;
 
 import com.mcy.rpc.core.aop.ConsumerHook;
 import com.mcy.rpc.core.async.ResponseCallbackListener;
+import com.mcy.rpc.util.Configure;
+
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Proxy;
 
 /**
  * @author zkzc-mcy create at 2018/8/24.
  */
-public interface RpcConsumer {
+public abstract class RpcConsumer  implements InvocationHandler{
 
-    RpcConsumer interfaceClass(Class<?> interfaceClass);
 
-    RpcConsumer version(String version);
+    protected Configure configure;
 
-    RpcConsumer clientTimeout(int clientTimeout);
+    protected Class<?> interfaceClazz;
+    protected String version;
+    protected int timeout;
 
-    RpcConsumer hook(ConsumerHook hook);
 
-    Object instance();
+    public RpcConsumer(Configure configure){
+        this.configure = configure;
+    }
 
-    void asynCall(String methodName);
+    public RpcConsumer interfaceClass(Class<?> interfaceClass){
+        this.interfaceClazz = interfaceClass;
+        return this;
+    }
 
-    <T extends ResponseCallbackListener> void asynCall(String methodName, T callbackListener);
+    public RpcConsumer version(String version){
+        this.version = version;
+        return this;
+    }
 
-    void cancelAsyn(String methodName);
+    public RpcConsumer clientTimeout(int clientTimeout) {
+        this.timeout = clientTimeout;
+        return this;
+    }
+
+    public Object instance() {
+        // return an Proxy
+        return Proxy.newProxyInstance(this.getClass().getClassLoader(),new Class[]{this.interfaceClazz},this);
+    }
+
+    public void asyncCall(String methodName) {
+        asyncCall(methodName, null);
+    }
+
+    public abstract RpcConsumer hook(ConsumerHook hook);
+
+
+
+    public abstract <T extends ResponseCallbackListener> void asyncCall(String methodName, T callbackListener);
+
+    public abstract void cancelAsync(String methodName);
 }
