@@ -9,10 +9,8 @@ import com.mcy.rpc.core.model.RpcResponse;
 import com.mcy.rpc.core.netty.RpcConnection;
 import com.mcy.rpc.core.netty.RpcNettyConnection;
 import com.mcy.rpc.util.Configure;
-import com.mcy.rpc.util.Tool;
+import com.mcy.rpc.util.SerializeTool;
 
-import javax.security.auth.login.Configuration;
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.*;
@@ -24,6 +22,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class RpcConsumerImpl extends RpcConsumer {
 
     private static AtomicLong callTimes = new AtomicLong(0L);
+
     private RpcConnection connection;
     private List<RpcConnection> connectionList;
     private Map<String, ResponseCallbackListener> asyncMethods;
@@ -48,8 +47,8 @@ public class RpcConsumerImpl extends RpcConsumer {
         return hook;
     }
 
+    /** 将请求分配到不同的连接处理 */
     RpcConnection select() {
-        // Random rd = new Random(System.currentTimeMillis());
         int d = (int) (callTimes.getAndIncrement() % (connectionList.size() + 1));
         if (d == 0) {
             return connection;
@@ -58,18 +57,18 @@ public class RpcConsumerImpl extends RpcConsumer {
         }
     }
 
-    public RpcConsumerImpl() {
+    public RpcConsumerImpl(Configure configure) {
         
-        super(new Configure());
+        super(configure);
 
         this.asyncMethods = new HashMap();
-        this.connection = new RpcNettyConnection(configure.getServerIp(), configure.getServerPort());
+        this.connection = new RpcNettyConnection(configure.getRemoteIp(), configure.getRemotePort());
         this.connection.connect();
         this.connectionList = new ArrayList();
         int num = Runtime.getRuntime().availableProcessors() / 3 - 2;
         
         for (int i = 0; i < num; i++) {
-            connectionList.add(new RpcNettyConnection(configure.getServerIp(), configure.getServerPort()));
+            connectionList.add(new RpcNettyConnection(configure.getRemoteIp(), configure.getRemotePort()));
         }
         for (RpcConnection conn : connectionList) {
             conn.connect();
@@ -142,14 +141,19 @@ public class RpcConsumerImpl extends RpcConsumer {
         request.setMethodName(method.getName());
         request.setParameters(method.getParameterTypes());
         request.setParameters(args);
-        if (hook != null) hook.before(request);
+
+        // 前置钩子回调
+        if (hook != null) {hook.before(request);}
+
         RpcResponse response = null;
         try {
             request.setContext(RpcContext.getProps());
-            response = select().Send(request, asyncMethods.containsKey(request.getMethodName()));
-            if (hook != null) hook.after(request);
+            response = (RpcResponse) select().Send(request, asyncMethods.containsKey(request.getMethodName()));
+
+            // 后置钩子回调
+            if (hook != null) {hook.after(request);}
             if (!asyncMethods.containsKey(request.getMethodName()) && response.getException() != null) {
-                Throwable e = Tool.deserialize(response.getException(), response.getClazz());
+                Throwable e = SerializeTool.deserialize(response.getException(), response.getClazz());
                 throw e.getCause();
             }
         } catch (Throwable t) {

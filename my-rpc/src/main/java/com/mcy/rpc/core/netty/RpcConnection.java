@@ -2,36 +2,25 @@ package com.mcy.rpc.core.netty;
 
 import com.mcy.rpc.core.async.ResponseCallbackListener;
 import com.mcy.rpc.core.model.RpcRequest;
-import com.mcy.rpc.core.model.RpcResponse;
-
+import java.util.List;
 import java.util.Map;
 
 /**
  * @author zkzc-mcy create at 2018/8/24.
  */
-public abstract class RpcConnection {
+public interface RpcConnection {
 
-    private int timeOut;
-    private String ip;
-    private int port;
-    private Map<String, ResponseCallbackListener> asyncMethod;
-
-    public RpcConnection(String ip, int port) {
-        this.ip = ip;
-        this.port = port;
-    }
-
-    public void setTimeOut(int timeOut) {
-        this.timeOut = timeOut;
-    }
-
-    public abstract void connect();
-
-    public abstract void close();
-
-    public void setAsyncMethod(Map<String, ResponseCallbackListener> asyncMethod) {
-        this.asyncMethod = asyncMethod;
-    }
-
-    public abstract RpcResponse Send(RpcRequest request, boolean b);
+    void init();
+    void connect();
+    void connect(String host,int port);
+    Object Send(RpcRequest request,boolean async);
+    void close();
+    boolean isConnected();
+    boolean isClosed();
+    boolean containsFuture(String key);
+    InvokeFuture<Object> removeFuture(String key);
+    void setResult(Object ret);
+    void setTimeOut(long timeout);
+    void setAsyncMethod(Map<String,ResponseCallbackListener> map);
+    List<InvokeFuture<Object>> getFutures(String method);
 }

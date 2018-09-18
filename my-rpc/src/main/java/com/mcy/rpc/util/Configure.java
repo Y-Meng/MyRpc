@@ -15,12 +15,12 @@ public class Configure {
 
     private Properties properties;
 
-    // server 配置
+    /** server 配置 */
     private int listen;
 
-    // client 配置
-    private String serverIp;
-    private int serverPort;
+    /** client 配置 */
+    private String remoteIp;
+    private int remotePort;
 
     public Configure() {
         try {
@@ -44,8 +44,29 @@ public class Configure {
     }
 
     private void initValues(Properties properties) {
-        System.out.println(properties);
 
+        this.listen = Integer.valueOf(properties.getProperty("rpc.server.listen", "7000"));
+
+        this.remoteIp = properties.getProperty("rpc.client.remote.ip", "127.0.0.1");
+        this.remotePort = Integer.valueOf(properties.getProperty("rpc.client.remote.port", "7000"));
+    }
+
+    public void printServerConfig(){
+        StringBuilder serverConfig = new StringBuilder("{");
+        serverConfig.append("listen=");
+        serverConfig.append(listen);
+        serverConfig.append("}");
+        System.out.println(serverConfig.toString());
+    }
+
+    public void printClientConfig(){
+        StringBuilder clientConfig = new StringBuilder("{");
+        clientConfig.append("remoteIp=");
+        clientConfig.append(remoteIp);
+        clientConfig.append(",remotePort=");
+        clientConfig.append(remotePort);
+        clientConfig.append("}");
+        System.out.println(clientConfig);
     }
 
     public int getListen() {
@@ -56,19 +77,19 @@ public class Configure {
         this.listen = listen;
     }
 
-    public String getServerIp() {
-        return serverIp;
+    public String getRemoteIp() {
+        return remoteIp;
     }
 
-    public void setServerIp(String serverIp) {
-        this.serverIp = serverIp;
+    public void setRemoteIp(String remoteIp) {
+        this.remoteIp = remoteIp;
     }
 
-    public int getServerPort() {
-        return serverPort;
+    public int getRemotePort() {
+        return remotePort;
     }
 
-    public void setServerPort(int serverPort) {
-        this.serverPort = serverPort;
+    public void setRemotePort(int remotePort) {
+        this.remotePort = remotePort;
     }
 }

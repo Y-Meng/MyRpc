@@ -4,7 +4,7 @@ import com.mcy.rpc.core.model.RpcRequest;
 
 /**
  * @author zkzc-mcy create at 2018/8/24.
- * rpc 钩子接口提供aop
+ * 为 rpc 接口提供AOP钩子
  */
 public interface ConsumerHook {
     void before(RpcRequest request);

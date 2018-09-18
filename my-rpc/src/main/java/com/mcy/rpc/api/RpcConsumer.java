@@ -12,16 +12,22 @@ import java.lang.reflect.Proxy;
  */
 public abstract class RpcConsumer  implements InvocationHandler{
 
-
+    /** 配置信息 */
     protected Configure configure;
 
+    /** 被代理接口 */
     protected Class<?> interfaceClazz;
+
+    /** 版本号 */
     protected String version;
-    protected int timeout;
+
+    /** 请求超时时间单位ms */
+    protected int timeout = 3000;
 
 
     public RpcConsumer(Configure configure){
         this.configure = configure;
+        configure.printClientConfig();
     }
 
     public RpcConsumer interfaceClass(Class<?> interfaceClass){
@@ -40,7 +46,8 @@ public abstract class RpcConsumer  implements InvocationHandler{
     }
 
     public Object instance() {
-        // return an Proxy
+
+        // 返回服务接口代理对象
         return Proxy.newProxyInstance(this.getClass().getClassLoader(),new Class[]{this.interfaceClazz},this);
     }
 
@@ -49,8 +56,6 @@ public abstract class RpcConsumer  implements InvocationHandler{
     }
 
     public abstract RpcConsumer hook(ConsumerHook hook);
-
-
 
     public abstract <T extends ResponseCallbackListener> void asyncCall(String methodName, T callbackListener);
 

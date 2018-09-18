@@ -2,7 +2,7 @@ package com.mcy.rpc.core.serializer;
 
 import com.mcy.rpc.core.model.RpcRequest;
 import com.mcy.rpc.core.model.RpcResponse;
-import com.mcy.rpc.util.Tool;
+import com.mcy.rpc.util.SerializeTool;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
@@ -69,7 +69,7 @@ public class RpcDecoder extends ByteToMessageDecoder {
             }
             else
             {
-                RpcResponse obj=(RpcResponse) Tool.deserialize(body, genericClass);
+                RpcResponse obj=(RpcResponse) SerializeTool.deserialize(body, genericClass);
                 obj.setRequestId(requestId);//设置requestId
                 out.add(obj);
 
@@ -109,7 +109,7 @@ public class RpcDecoder extends ByteToMessageDecoder {
             }
             else
             {
-                RpcRequest obj=(RpcRequest) Tool.deserialize(body, genericClass);
+                RpcRequest obj=(RpcRequest) SerializeTool.deserialize(body, genericClass);
                 obj.setRequestId(requestId);//设置requestId
                 out.add(obj);
 
@@ -126,7 +126,7 @@ public class RpcDecoder extends ByteToMessageDecoder {
         {
             byte[] body = new byte[dataLength];
             in.readBytes(body);
-            Object obj=Tool.deserialize(body, genericClass);
+            Object obj= SerializeTool.deserialize(body, genericClass);
             out.add(obj);
         }
     }

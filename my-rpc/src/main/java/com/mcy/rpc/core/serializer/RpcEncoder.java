@@ -2,7 +2,7 @@ package com.mcy.rpc.core.serializer;
 
 import com.mcy.rpc.core.model.RpcRequest;
 import com.mcy.rpc.core.model.RpcResponse;
-import com.mcy.rpc.util.Tool;
+import com.mcy.rpc.util.SerializeTool;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
@@ -31,7 +31,7 @@ public class RpcEncoder extends MessageToByteEncoder {
             throws Exception {
         // TODO Auto-generated method stub
 
-//		byte[] body=Tool.serialize(msg);
+//		byte[] body=SerializeTool.serialize(msg);
 //		//byte[] body=ByteObjConverter.ObjectToByte(msg);
 //		//byte[] body=kryo.Serialize(msg);
 //		out.writeInt(body.length);
@@ -49,7 +49,7 @@ public class RpcEncoder extends MessageToByteEncoder {
             if (responseCacheName != null && responseCacheName.equals(response)) {
                 body = responseCacheValue;
             } else {
-                body = Tool.serialize(msg);
+                body = SerializeTool.serialize(msg);
                 //缓存这个值
                 responseCacheName = response;
                 responseCacheValue = body;
@@ -71,7 +71,7 @@ public class RpcEncoder extends MessageToByteEncoder {
             if (requestCacheName != null && requestCacheName.equals(request)) {
                 body = requestCacheValue;
             } else {
-                body = Tool.serialize(msg);
+                body = SerializeTool.serialize(msg);
                 //缓存这个值
                 requestCacheName = request;
                 requestCacheValue = body;
@@ -84,7 +84,7 @@ public class RpcEncoder extends MessageToByteEncoder {
             out.writeBytes(requestIdByte);
             out.writeBytes(body);
         } else {
-            byte[] body = Tool.serialize(msg);
+            byte[] body = SerializeTool.serialize(msg);
             out.writeInt(body.length);
             out.writeBytes(body);
         }

@@ -12,12 +12,12 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author zkzc-mcy create at 2018/8/24.
  *
- * 序列化工具
+ * 序列化工具，使用protostuff
  */
-public class Tool {
+public class SerializeTool {
     private static Map<Class<?>, Schema<?>> cachedSchema = new ConcurrentHashMap<>();
 
-    private Tool() {
+    private SerializeTool() {
     }
 
     @SuppressWarnings("unchecked")
@@ -66,51 +66,10 @@ public class Tool {
 
 
     public static Object ByteToObject(byte[] bytes) {
-        Object obj = null;
-        ByteArrayInputStream bi = new ByteArrayInputStream(bytes);
-        ObjectInputStream oi = null;
-        try {
-            oi = new ObjectInputStream(bi);
-            obj = oi.readObject();
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                bi.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            try {
-                oi.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return obj;
+        return ByteObjConverter.ByteToObject(bytes);
     }
 
     public static byte[] ObjectToByte(Object obj) {
-        byte[] bytes = null;
-        ByteArrayOutputStream bo = new ByteArrayOutputStream();
-        ObjectOutputStream oo = null;
-        try {
-            oo = new ObjectOutputStream(bo);
-            oo.writeObject(obj);
-            bytes = bo.toByteArray();
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                bo.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            try {
-                oo.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return (bytes);
+        return ByteObjConverter.ObjectToByte(obj);
     }
 }

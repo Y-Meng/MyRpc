@@ -1,17 +1,25 @@
 package com.mcy.rpc.api;
 
+import com.mcy.rpc.util.Configure;
+
 /**
  * @author zkzc-mcy create at 2018/8/24.
  */
 public abstract class RpcProvider {
 
-    public RpcProvider() {}
+    /** 配置信息 */
+    protected Configure configure;
+
+    public RpcProvider(Configure configure) {
+        this.configure = configure;
+        configure.printServerConfig();
+    }
 
     /**
      * init Provider
      */
     private void init(){
-        //TODO
+        publish();
     }
 
     /**
