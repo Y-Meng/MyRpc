@@ -11,6 +11,7 @@ import com.mcy.rpc.core.netty.RpcNettyConnection;
 import com.mcy.rpc.util.Configure;
 import com.mcy.rpc.util.SerializeTool;
 
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.*;
@@ -19,7 +20,19 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * @author zkzc-mcy create at 2018/8/24.
  */
-public class RpcConsumerImpl extends RpcConsumer {
+public class RpcConsumerImpl extends RpcConsumer implements InvocationHandler {
+
+    /** 被代理接口 */
+    private Class<?> interfaceClazz;
+
+    /** 版本号 */
+    private String version;
+
+    /** 请求超时时间单位ms */
+    private int timeout = 3000;
+
+    /** AOP 回调钩子*/
+    private ConsumerHook hook;
 
     private static AtomicLong callTimes = new AtomicLong(0L);
 
@@ -28,50 +41,53 @@ public class RpcConsumerImpl extends RpcConsumer {
     private Map<String, ResponseCallbackListener> asyncMethods;
 
 
-    private ConsumerHook hook;
-
-    public Class<?> getInterfaceClass() {
-        return interfaceClazz;
+    public RpcConsumerImpl() {
+        super();
+        initConnection();
     }
 
-    public String getVersion() {
-        return version;
-    }
-
-    public int getTimeout() {
-        this.connection.setTimeOut(timeout);
-        return timeout;
-    }
-
-    public ConsumerHook getHook() {
-        return hook;
-    }
-
-    /** 将请求分配到不同的连接处理 */
-    RpcConnection select() {
-        int d = (int) (callTimes.getAndIncrement() % (connectionList.size() + 1));
-        if (d == 0) {
-            return connection;
-        } else {
-            return connectionList.get(d - 1);
-        }
-    }
-
-    public RpcConsumerImpl(Configure configure) {
-        
-        super(configure);
+    private void initConnection(){
 
         this.asyncMethods = new HashMap();
         this.connection = new RpcNettyConnection(configure.getRemoteIp(), configure.getRemotePort());
         this.connection.connect();
+
         this.connectionList = new ArrayList();
         int num = Runtime.getRuntime().availableProcessors() / 3 - 2;
-        
+
         for (int i = 0; i < num; i++) {
             connectionList.add(new RpcNettyConnection(configure.getRemoteIp(), configure.getRemotePort()));
         }
         for (RpcConnection conn : connectionList) {
             conn.connect();
+        }
+    }
+
+    @Override
+    public RpcConsumer interfaceClass(Class<?> interfaceClass){
+        this.interfaceClazz = interfaceClass;
+        return this;
+    }
+
+    @Override
+    public RpcConsumer version(String version){
+        this.version = version;
+        return this;
+    }
+
+    @Override
+    public RpcConsumer clientTimeout(int clientTimeout) {
+        this.timeout = clientTimeout;
+        return this;
+    }
+
+    /** 将请求分配到不同的连接处理 */
+    private RpcConnection select() {
+        int d = (int) (callTimes.getAndIncrement() % (connectionList.size() + 1));
+        if (d == 0) {
+            return connection;
+        } else {
+            return connectionList.get(d - 1);
         }
     }
 
@@ -81,12 +97,14 @@ public class RpcConsumerImpl extends RpcConsumer {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    public <T> T proxy(Class<T> interfaceClass) throws Throwable {
+    public <T> T proxy(Class<T> interfaceClass) throws Exception {
+
         if (!interfaceClass.isInterface()) {
             throw new IllegalArgumentException(interfaceClass.getName() + " is not an interface");
         }
-        return (T) Proxy.newProxyInstance(interfaceClass.getClassLoader(), new Class<?>[]{interfaceClass}, this);
+
+        Object proxy = Proxy.newProxyInstance(interfaceClass.getClassLoader(), new Class<?>[]{interfaceClass}, this);
+        return (T) proxy;
     }
 
     @Override
@@ -99,7 +117,7 @@ public class RpcConsumerImpl extends RpcConsumer {
     public Object instance() {
         try {
             return proxy(this.interfaceClazz);
-        } catch (Throwable e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
@@ -112,6 +130,7 @@ public class RpcConsumerImpl extends RpcConsumer {
 
     @Override
     public <T extends ResponseCallbackListener> void asyncCall(String methodName, T callbackListener) {
+
         this.asyncMethods.put(methodName, callbackListener);
         this.connection.setAsyncMethod(asyncMethods);
         for (RpcConnection conn : connectionList) {
@@ -121,6 +140,7 @@ public class RpcConsumerImpl extends RpcConsumer {
 
     @Override
     public void cancelAsync(String methodName) {
+
         this.asyncMethods.remove(methodName);
         this.connection.setAsyncMethod(asyncMethods);
         for (RpcConnection conn : connectionList) {
@@ -130,7 +150,10 @@ public class RpcConsumerImpl extends RpcConsumer {
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        List<String> parameterTypes = new LinkedList<String>();
+
+        System.out.println("service invoke");
+
+        List<String> parameterTypes = new LinkedList<>();
         for (Class<?> parameterType : method.getParameterTypes()) {
             parameterTypes.add(parameterType.getName());
         }
@@ -166,7 +189,7 @@ public class RpcConsumerImpl extends RpcConsumer {
         }
 
         if (response == null) {
-            return null;
+            throw  new Exception("请求失败");
         } else if (response.getErrorMsg() != null) {
             throw response.getErrorMsg();
         } else {

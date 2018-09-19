@@ -13,13 +13,15 @@ public class RpcClientDemo {
 
     public static void initClient(){
         Configure configure = new Configure();
-        RpcConsumer consumer = new RpcConsumerImpl(configure);
+        RpcConsumer consumer = new RpcConsumerImpl();
         consumer.interfaceClass(IDemoService.class)
                 .version("1.0")
                 .clientTimeout(1000);
 
         IDemoService service = (IDemoService) consumer.instance();
-        service.hello("你好");
+        for(int i = 0; i < 10; i++) {
+            service.hello("你好" + i);
+        }
     }
 
     public static void main(String[] args){
