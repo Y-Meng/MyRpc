@@ -14,8 +14,12 @@ public abstract class RpcConsumer{
 
 
     public RpcConsumer(){
-        this.configure = new Configure();
-        configure.printClientConfig();
+        this(new Configure());
+    }
+
+    public RpcConsumer(Configure configure) {
+        this.configure = configure;
+        this.configure.printClientConfig();
     }
 
     public RpcConsumer interfaceClass(Class<?> interfaceClass){

@@ -10,7 +10,6 @@ import com.mcy.rpc.core.netty.RpcConnection;
 import com.mcy.rpc.core.netty.RpcNettyConnection;
 import com.mcy.rpc.util.Configure;
 import com.mcy.rpc.util.SerializeTool;
-
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -40,9 +39,13 @@ public class RpcConsumerImpl extends RpcConsumer implements InvocationHandler {
     private List<RpcConnection> connectionList;
     private Map<String, ResponseCallbackListener> asyncMethods;
 
-
     public RpcConsumerImpl() {
         super();
+        initConnection();
+    }
+
+    public RpcConsumerImpl(Configure configure){
+        super(configure);
         initConnection();
     }
 
@@ -189,7 +192,7 @@ public class RpcConsumerImpl extends RpcConsumer implements InvocationHandler {
         }
 
         if (response == null) {
-            throw  new Exception("请求失败");
+            return null;
         } else if (response.getErrorMsg() != null) {
             throw response.getErrorMsg();
         } else {
