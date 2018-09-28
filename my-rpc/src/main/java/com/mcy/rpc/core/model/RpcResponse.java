@@ -89,45 +89,56 @@ public class RpcResponse implements Serializable {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+
+        if (getClass() != obj.getClass()) {
             return false;
+        }
+
         RpcResponse other = (RpcResponse) obj;
 
         if (clazz == null) {
-            if (other.getClazz() != null)
+            if (other.getClazz() != null) {
                 return false;
+            }
         } else {
-            if (other.getClazz() == null)
+            if (other.getClazz() == null) {
                 return false;
-            else if (!clazz.equals(other.getClazz()))
+            } else if (!clazz.equals(other.getClazz())) {
                 return false;
+            }
         }
+
         if (exception == null) {
-            if (other.getException() != null)
+            if (other.getException() != null) {
                 return false;
+            }
         } else {
-            if (other.getException() == null)
+            if (other.getException() == null) {return false;}
+            if (exception.length != other.getException().length) {
                 return false;
-            if (exception.length != other.getException().length)
-                return false;
-            else
+            } else {
                 for (int i = 0; i < exception.length; i++) {
-                    if (exception[i] != other.getException()[i])
-                        return false;
+                    if (exception[i] != other.getException()[i]) {return false;}
                 }
+            }
         }
         if (appResponse == null) {
-            if (other.getAppResponse() != null)
+            if (other.getAppResponse() != null) {
                 return false;
+            }
         } else {
-            if (other.getAppResponse() == null)
+            if (other.getAppResponse() == null) {
                 return false;
-            else if (!appResponse.equals(other.getAppResponse()))
+            } else if (!appResponse.equals(other.getAppResponse())){
                 return false;
+            }
         }
         return true;
     }

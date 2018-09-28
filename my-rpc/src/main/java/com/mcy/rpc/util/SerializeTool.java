@@ -4,8 +4,6 @@ import io.protostuff.LinkedBuffer;
 import io.protostuff.ProtostuffIOUtil;
 import io.protostuff.Schema;
 import io.protostuff.runtime.RuntimeSchema;
-
-import java.io.*;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -15,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * 序列化工具，使用protostuff
  */
 public class SerializeTool {
+
     private static Map<Class<?>, Schema<?>> cachedSchema = new ConcurrentHashMap<>();
 
     private SerializeTool() {

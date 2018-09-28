@@ -5,7 +5,7 @@ import java.util.Map;
 
 /**
  * @author zkzc-mcy create at 2018/8/24.
- *         rpc请求封装
+ * rpc请求封装
  */
 public class RpcRequest implements Serializable {
 
@@ -67,71 +67,92 @@ public class RpcRequest implements Serializable {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+
+        if (getClass() != obj.getClass()) {
             return false;
+        }
+
         RpcRequest other = (RpcRequest) obj;
         if (className == null) {
-            if (other.getClassName() != null)
+            if (other.getClassName() != null) {
                 return false;
+            }
         } else {
-            if (other.getClassName() == null)
+            if (other.getClassName() == null) {
                 return false;
-            else if (!className.equals(other.getClassName()))
+            } else if (!className.equals(other.getClassName())) {
                 return false;
+            }
         }
 
         if (methodName == null) {
-            if (other.getMethodName() != null)
+            if (other.getMethodName() != null) {
                 return false;
+            }
+
         } else {
-            if (other.getMethodName() == null)
+            if (other.getMethodName() == null) {
                 return false;
-            else if (!methodName.equals(other.getMethodName()))
+            } else if (!methodName.equals(other.getMethodName())) {
                 return false;
+            }
         }
 
         if (parameterTypes == null) {
-            if (other.getParameterTypes() != null)
+            if (other.getParameterTypes() != null) {
                 return false;
+            }
         } else {
-            if (other.getParameterTypes() == null)
+            if (other.getParameterTypes() == null) {
                 return false;
-            if (parameterTypes.length != other.getParameterTypes().length)
+            }
+            if (parameterTypes.length != other.getParameterTypes().length) {
                 return false;
-            else
+            } else {
                 for (int i = 0; i < parameterTypes.length; i++) {
-                    if (!parameterTypes[i].equals(other.getParameterTypes()[i]))
+                    if (!parameterTypes[i].equals(other.getParameterTypes()[i])) {
                         return false;
+                    }
                 }
+            }
         }
 
         if (parameters == null) {
-            if (other.getParameters() != null)
+            if (other.getParameters() != null) {
                 return false;
+            }
         } else {
-            if (other.getParameters() == null)
+            if (other.getParameters() == null) {
                 return false;
-            if (parameters.length != other.getParameters().length)
+            }
+            if (parameters.length != other.getParameters().length) {
                 return false;
-            else
+            } else {
                 for (int i = 0; i < parameters.length; i++) {
-                    if (!parameters[i].equals(other.getParameters()[i]))
+                    if (!parameters[i].equals(other.getParameters()[i])) {
                         return false;
+                    }
                 }
+            }
         }
 
         if (context == null) {
-            if (other.getContext() != null)
+            if (other.getContext() != null) {
                 return false;
+            }
         } else {
-            if (other.getContext() == null)
+            if (other.getContext() == null) {
                 return false;
-            else if (!context.equals(other.getContext()))
+            } else if (!context.equals(other.getContext())) {
                 return false;
+            }
         }
         return true;
     }

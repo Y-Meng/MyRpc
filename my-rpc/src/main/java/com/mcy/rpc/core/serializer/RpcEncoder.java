@@ -12,34 +12,22 @@ import io.netty.handler.codec.MessageToByteEncoder;
  */
 public class RpcEncoder extends MessageToByteEncoder {
 
-
     private static Object responseCacheName = null;
     private static byte[] responseCacheValue = null;
     private static Object requestCacheName = null;
     private static byte[] requestCacheValue = null;
     private Class<?> genericClass;
-    private KryoSerialization kryo;
 
     public RpcEncoder(Class<?> genericClass) {
         this.genericClass = genericClass;
-        kryo = new KryoSerialization();
-        kryo.register(genericClass);
     }
 
     @Override
-    protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf out)
-            throws Exception {
-        // TODO Auto-generated method stub
+    protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf out) throws Exception {
 
-//		byte[] body=SerializeTool.serialize(msg);
-//		//byte[] body=ByteObjConverter.ObjectToByte(msg);
-//		//byte[] body=kryo.Serialize(msg);
-//		out.writeInt(body.length);
-//		out.writeBytes(body);
+        //如果是对RpcResponse进行编码，首先把request id指定为""，然后到缓存中找相等的对象的缓存值
+        if (genericClass.equals(RpcResponse.class)) {
 
-        //new code
-        if (genericClass.equals(RpcResponse.class))//如果是对RpcResponse进行编码    首先把request id指定为""   然后到缓存中找相等的对象的缓存值
-        {
             RpcResponse response = (RpcResponse) msg;
             String requestId = response.getRequestId();
             response.setRequestId("");
@@ -55,13 +43,16 @@ public class RpcEncoder extends MessageToByteEncoder {
                 responseCacheValue = body;
             }
 
-            int totalLen = requestIdByte.length + 4 + body.length;//总长度为 一个表示 requestid的int 一个 requestid的byte长度 和真实数据的byte长度
+            //总长度 = 记录requestid的byte长度的int长度 + requestid的byte长度 + 真实数据的byte长度
+            int totalLen = 4 + requestIdByte.length + body.length;
 
             out.writeInt(totalLen);
             out.writeInt(requestIdByte.length);
             out.writeBytes(requestIdByte);
             out.writeBytes(body);
+
         } else if (genericClass.equals(RpcRequest.class)) {
+
             RpcRequest request = (RpcRequest) msg;
             String requestId = request.getRequestId();
             request.setRequestId("");
@@ -77,7 +68,8 @@ public class RpcEncoder extends MessageToByteEncoder {
                 requestCacheValue = body;
             }
 
-            int totalLen = requestIdByte.length + 4 + body.length;//总长度为 一个表示 requestid的int 一个 requestid的byte长度 和真实数据的byte长度
+            //总长度为 一个表示 requestid的int 一个 requestid的byte长度 和真实数据的byte长度
+            int totalLen = requestIdByte.length + 4 + body.length;
 
             out.writeInt(totalLen);
             out.writeInt(requestIdByte.length);

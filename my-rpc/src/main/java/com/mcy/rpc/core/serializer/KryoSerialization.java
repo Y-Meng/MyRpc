@@ -6,10 +6,11 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 /**
- * Created by mengchaoyue on 2018/9/8.
+ * @author mengchaoyue on 2018/9/8.
  * Kryo 序列化工具类
  */
 public class KryoSerialization {
+
     private Kryo kryo;
     private Registration registration = null;
     private Class<?> t;

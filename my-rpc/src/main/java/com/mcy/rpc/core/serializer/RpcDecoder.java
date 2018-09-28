@@ -19,22 +19,19 @@ public class RpcDecoder extends ByteToMessageDecoder {
     private static byte[] responseCacheName = null;
     private static RpcResponse responseCacheValue = null;
     private Class<?> genericClass;
-    private KryoSerialization kryo;
 
     public RpcDecoder(Class<?> genericClass) {
         this.genericClass = genericClass;
-        kryo = new KryoSerialization();
-        kryo.register(genericClass);
     }
 
     @Override
     public void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
-        // TODO Auto-generated method stub
-        //System.out.println("decode:"+in.readableBytes());
+
         int HEAD_LENGTH = 4;
         if (in.readableBytes() < HEAD_LENGTH) {
             return;
         }
+
         in.markReaderIndex();
         int dataLength = in.readInt();
         if (dataLength < 0) {
@@ -46,7 +43,9 @@ public class RpcDecoder extends ByteToMessageDecoder {
         }
 
         if (genericClass.equals(RpcResponse.class)) {
-            int requestIdLength = in.readInt();//获取到requestId的长度
+
+            // 获取到requestId的长度
+            int requestIdLength = in.readInt();
 
             byte[] requestIdBytes = new byte[requestIdLength];
             in.readBytes(requestIdBytes);
@@ -58,27 +57,31 @@ public class RpcDecoder extends ByteToMessageDecoder {
             String requestId = new String(requestIdBytes);
 
             if (responseCacheName != null && cacheEqual(responseCacheName, body)) {
-                RpcResponse obj = new RpcResponse();
-                obj.setRequestId(requestId);
-                obj.setAppResponse(responseCacheValue.getAppResponse());
-                obj.setClazz(responseCacheValue.getClazz());
-                obj.setException(responseCacheValue.getException());
 
-                out.add(obj);
+                RpcResponse response = new RpcResponse();
+                response.setRequestId(requestId);
+                response.setAppResponse(responseCacheValue.getAppResponse());
+                response.setClazz(responseCacheValue.getClazz());
+                response.setException(responseCacheValue.getException());
+
+                out.add(response);
             } else {
-                RpcResponse obj = (RpcResponse) SerializeTool.deserialize(body, genericClass);
-                obj.setRequestId(requestId);//设置requestId
-                out.add(obj);
+                RpcResponse response = SerializeTool.deserialize(body, genericClass);
+                // 设置requestId
+                response.setRequestId(requestId);
+                out.add(response);
 
                 responseCacheName = body;
                 responseCacheValue = new RpcResponse();
-                responseCacheValue.setAppResponse(obj.getAppResponse());
-                responseCacheValue.setClazz(obj.getClazz());
-                responseCacheValue.setException(obj.getException());
+                responseCacheValue.setAppResponse(response.getAppResponse());
+                responseCacheValue.setClazz(response.getClazz());
+                responseCacheValue.setException(response.getException());
 
             }
         } else if (genericClass.equals(RpcRequest.class)) {
-            int requestIdLength = in.readInt();//获取到requestId的长度
+
+            //获取到requestId的长度
+            int requestIdLength = in.readInt();
 
             byte[] requestIdBytes = new byte[requestIdLength];
             in.readBytes(requestIdBytes);
@@ -90,28 +93,29 @@ public class RpcDecoder extends ByteToMessageDecoder {
             String requestId = new String(requestIdBytes);
 
             if (requestCacheName != null && cacheEqual(requestCacheName, body)) {
-                RpcRequest obj = new RpcRequest();
-                obj.setClassName(requestCacheValue.getClassName());
-                obj.setContext(requestCacheValue.getContext());
-                obj.setMethodName(requestCacheValue.getMethodName());
-                obj.setParameters(requestCacheValue.getParameters());
-                obj.setParameterTypes(requestCacheValue.getParameterTypes());
-                obj.setRequestId(requestId);
 
-                out.add(obj);
+                RpcRequest request = new RpcRequest();
+                request.setClassName(requestCacheValue.getClassName());
+                request.setContext(requestCacheValue.getContext());
+                request.setMethodName(requestCacheValue.getMethodName());
+                request.setParameters(requestCacheValue.getParameters());
+                request.setParameterTypes(requestCacheValue.getParameterTypes());
+                request.setRequestId(requestId);
+
+                out.add(request);
 
             } else {
-                RpcRequest obj = (RpcRequest) SerializeTool.deserialize(body, genericClass);
-                obj.setRequestId(requestId);//设置requestId
-                out.add(obj);
+                RpcRequest request = SerializeTool.deserialize(body, genericClass);
+                request.setRequestId(requestId);
+                out.add(request);
 
                 requestCacheName = body;
                 requestCacheValue = new RpcRequest();
-                requestCacheValue.setClassName(obj.getClassName());
-                requestCacheValue.setContext(obj.getContext());
-                requestCacheValue.setMethodName(obj.getMethodName());
-                requestCacheValue.setParameters(obj.getParameters());
-                requestCacheValue.setParameterTypes(obj.getParameterTypes());
+                requestCacheValue.setClassName(request.getClassName());
+                requestCacheValue.setContext(request.getContext());
+                requestCacheValue.setMethodName(request.getMethodName());
+                requestCacheValue.setParameters(request.getParameters());
+                requestCacheValue.setParameterTypes(request.getParameterTypes());
             }
         } else {
             byte[] body = new byte[dataLength];
@@ -122,6 +126,7 @@ public class RpcDecoder extends ByteToMessageDecoder {
     }
 
     private static boolean cacheEqual(byte[] data1, byte[] data2) {
+
         if (data1 == null) {
             if (data2 != null) {
                 return false;

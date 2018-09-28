@@ -9,7 +9,8 @@ import java.util.Map;
  */
 public class RpcContext {
 
-    //TODO how can I get props as a provider? tip:ThreadLocal
+    // TODO how can I get props as a provider? tip:ThreadLocal
+
     public static Map<String,Object> props = new HashMap<String, Object>();
 
     public static void addProp(String key ,Object value){
