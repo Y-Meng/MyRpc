@@ -36,18 +36,6 @@ public class RpcProviderImpl extends RpcProvider{
         super(configure);
     }
 
-    public String getVersion() {
-        return version;
-    }
-
-    public int getTimeout() {
-        return timeout;
-    }
-
-    public String getType() {
-        return type;
-    }
-
     private int timeout;
     private String type;
     
@@ -65,7 +53,7 @@ public class RpcProviderImpl extends RpcProvider{
 
     @Override
     public RpcProvider impl(Object serviceInstance) {
-        this.classImplement=serviceInstance;
+        this.classImplement = serviceInstance;
         return this;
     }
 
@@ -101,8 +89,6 @@ public class RpcProviderImpl extends RpcProvider{
                                 throws Exception {
                             ch.pipeline().addLast(new RpcEncoder(RpcResponse.class));
                             ch.pipeline().addLast(new RpcDecoder(RpcRequest.class));
-//                        	ch.pipeline().addLast(new FSTNettyEncode());
-//                          ch.pipeline().addLast(new FSTNettyDecode());
                             ch.pipeline().addLast(new RpcRequestHandler(handlerMap));
                         }
                     })

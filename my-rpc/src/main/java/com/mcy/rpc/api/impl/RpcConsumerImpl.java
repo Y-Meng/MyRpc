@@ -154,7 +154,7 @@ public class RpcConsumerImpl extends RpcConsumer implements InvocationHandler {
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 
-        System.out.println("service invoke");
+//        System.out.println("service invoke");
 
         List<String> parameterTypes = new LinkedList<>();
         for (Class<?> parameterType : method.getParameterTypes()) {
@@ -165,7 +165,7 @@ public class RpcConsumerImpl extends RpcConsumer implements InvocationHandler {
         request.setRequestId(UUID.randomUUID().toString());
         request.setClassName(method.getDeclaringClass().getName());
         request.setMethodName(method.getName());
-        request.setParameters(method.getParameterTypes());
+        request.setParameterTypes(method.getParameterTypes());
         request.setParameters(args);
 
         // 前置钩子回调
@@ -174,7 +174,7 @@ public class RpcConsumerImpl extends RpcConsumer implements InvocationHandler {
         RpcResponse response = null;
         try {
             request.setContext(RpcContext.getProps());
-            response = (RpcResponse) select().Send(request, asyncMethods.containsKey(request.getMethodName()));
+            response = (RpcResponse) select().send(request, asyncMethods.containsKey(request.getMethodName()));
 
             // 后置钩子回调
             if (hook != null) {hook.after(request);}

@@ -9,19 +9,19 @@ import com.mcy.rpc.util.Configure;
  */
 public class RpcServerDemo {
 
-    public static void initServer(){
+    public static void initServer() throws IllegalAccessException, InstantiationException {
         Configure configure = new Configure();
 
         RpcProvider provider = new RpcProviderImpl(configure);
         provider.serviceInterface(IDemoService.class)
-                .impl(DemoServiceImpl.class)
+                .impl(DemoServiceImpl.class.newInstance())
                 .version("1.0")
                 .timeout(1000)
                 .publish();
     }
 
 
-    public static void main(String[] args){
+    public static void main(String[] args) throws InstantiationException, IllegalAccessException {
 
         initServer();
     }

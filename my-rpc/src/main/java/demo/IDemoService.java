@@ -7,4 +7,6 @@ package demo;
 public interface IDemoService {
 
     String hello(String name);
+
+    int sum(int a, int b);
 }

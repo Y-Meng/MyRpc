@@ -3,13 +3,15 @@ package com.mcy.rpc.core.netty.handler;
 import com.mcy.rpc.core.context.RpcContext;
 import com.mcy.rpc.core.model.RpcRequest;
 import com.mcy.rpc.core.model.RpcResponse;
-import com.mcy.rpc.core.serializer.KryoSerialization;
+import com.mcy.rpc.util.CglibCache;
+import com.mcy.rpc.util.ReflectionCache;
 import com.mcy.rpc.util.SerializeTool;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import net.sf.cglib.reflect.FastClass;
 import net.sf.cglib.reflect.FastMethod;
-
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -75,14 +77,17 @@ public class RpcRequestHandler extends ChannelInboundHandlerAdapter {
 
         RpcRequest request = (RpcRequest) msg;
         String host = ctx.channel().remoteAddress().toString();
+
         //更新上下文
         UpdateRpcContext(host, request.getContext());
 
-        //TODO 获取接口名 函数名 参数    找到实现类   反射实现
+
         RpcResponse response = new RpcResponse();
         response.setRequestId(request.getRequestId());
         try {
+            //TODO 获取接口名 函数名 参数    找到实现类   反射实现
             Object result = handle(request);
+
             if (cacheName != null && cacheName.equals(result)) {
                 response.setAppResponse(cacheValue);
             } else {
@@ -91,6 +96,7 @@ public class RpcRequestHandler extends ChannelInboundHandlerAdapter {
                 cacheValue = SerializeTool.ObjectToByte(result);
             }
         } catch (Throwable t) {
+            t.printStackTrace();
             response.setException(SerializeTool.serialize(t));
             response.setClazz(t.getClass());
         }
@@ -111,9 +117,10 @@ public class RpcRequestHandler extends ChannelInboundHandlerAdapter {
 
         String className = request.getClassName();
 
-        Object classimpl = handlerMap.get(className);//通过类名找到实现的类
+        // 通过类名找到实现的类
+        Object classImpl = handlerMap.get(className);
 
-        Class<?> clazz = classimpl.getClass();
+        Class<?> clazz = classImpl.getClass();
 
         String methodName = request.getMethodName();
 
@@ -121,33 +128,43 @@ public class RpcRequestHandler extends ChannelInboundHandlerAdapter {
 
         Object[] parameters = request.getParameters();
 
-//		 Method method = ReflectionCache.getMethod(clazz.getName(),methodName, parameterTypes);
-//		 method.setAccessible(true);
-
-        //System.out.println(className+":"+methodName+":"+parameters.length);
         if (methodCacheName != null && methodCacheName.equals(request)) {
             return methodCacheValue;
         } else {
             try {
                 methodCacheName = request;
-                if (methodMap.containsKey(methodName)) {
-                    methodCacheValue = methodMap.get(methodName).invoke(classimpl, parameters);
-                    return methodCacheValue;
-                } else {
-                    FastClass serviceFastClass = FastClass.create(clazz);
-                    FastMethod serviceFastMethod = serviceFastClass.getMethod(methodName, parameterTypes);
-                    methodMap.put(methodName, serviceFastMethod);
-                    methodCacheValue = serviceFastMethod.invoke(classimpl, parameters);
-                    return methodCacheValue;
-                }
-                //return method.invoke(classimpl, parameters);
+
+                // cglib代理（执行效率相差不大）
+                methodCacheValue =  cglibInvoke(clazz, classImpl, methodName, parameterTypes, parameters);
+
+                // java动态代理
+                // methodCacheValue =  dynamicInvoke(clazz, classImpl, methodName, parameterTypes, parameters);
+
+                return methodCacheValue;
             } catch (Throwable e) {
-                throw e.getCause();
+                throw e;
             }
         }
     }
 
-    private Map<String, FastMethod> methodMap = new HashMap<String, FastMethod>();
+    /** java动态代理（带缓存） */
+    private Object dynamicInvoke(Class<?> clazz, Object classImpl,
+                                 String methodName, Class[] parameterTypes, Object[] parameters)
+            throws InvocationTargetException, IllegalAccessException, NoSuchMethodException, ClassNotFoundException {
+
+        Method method = ReflectionCache.getMethod(clazz, methodName, parameterTypes);
+        method.setAccessible(true);
+        return method.invoke(classImpl, parameters);
+    }
+
+    /** cglib代理实现（带缓存） */
+    private Object cglibInvoke(Class<?> clazz, Object classImpl,
+                               String methodName, Class[] parameterTypes, Object[] parameters)
+            throws InvocationTargetException {
+
+        FastMethod serviceFastMethod = CglibCache.getMethod(clazz, methodName, parameterTypes);
+        return serviceFastMethod.invoke(classImpl, parameters);
+    }
 
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {

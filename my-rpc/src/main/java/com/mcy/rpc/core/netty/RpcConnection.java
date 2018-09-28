@@ -13,7 +13,7 @@ public interface RpcConnection {
     void init();
     void connect();
     void connect(String host,int port);
-    Object Send(RpcRequest request,boolean async);
+    Object send(RpcRequest request,boolean async);
     void close();
     boolean isConnected();
     boolean isClosed();

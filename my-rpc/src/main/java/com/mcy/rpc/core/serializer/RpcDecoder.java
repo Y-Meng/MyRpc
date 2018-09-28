@@ -14,23 +14,24 @@ import java.util.List;
  */
 public class RpcDecoder extends ByteToMessageDecoder {
 
-    private static byte[] requestCacheName=null;
-    private static RpcRequest requestCacheValue=null;
-    private static byte[] responseCacheName=null;
-    private static RpcResponse responseCacheValue=null;
+    private static byte[] requestCacheName = null;
+    private static RpcRequest requestCacheValue = null;
+    private static byte[] responseCacheName = null;
+    private static RpcResponse responseCacheValue = null;
     private Class<?> genericClass;
     private KryoSerialization kryo;
 
     public RpcDecoder(Class<?> genericClass) {
         this.genericClass = genericClass;
-        kryo=new KryoSerialization();
+        kryo = new KryoSerialization();
         kryo.register(genericClass);
     }
+
     @Override
     public void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
         // TODO Auto-generated method stub
         //System.out.println("decode:"+in.readableBytes());
-        int HEAD_LENGTH=4;
+        int HEAD_LENGTH = 4;
         if (in.readableBytes() < HEAD_LENGTH) {
             return;
         }
@@ -44,59 +45,52 @@ public class RpcDecoder extends ByteToMessageDecoder {
             return;
         }
 
-        if(genericClass.equals(RpcResponse.class))
-        {
-            int requestIdLength=in.readInt();//获取到requestId的长度
+        if (genericClass.equals(RpcResponse.class)) {
+            int requestIdLength = in.readInt();//获取到requestId的长度
 
-            byte[] requestIdBytes=new byte[requestIdLength];
+            byte[] requestIdBytes = new byte[requestIdLength];
             in.readBytes(requestIdBytes);
 
-            int bodyLength=dataLength-4-requestIdLength;
+            int bodyLength = dataLength - 4 - requestIdLength;
 
             byte[] body = new byte[bodyLength];
             in.readBytes(body);
-            String requestId=new String(requestIdBytes);
+            String requestId = new String(requestIdBytes);
 
-            if(responseCacheName!=null&&cacheEqual(responseCacheName,body))
-            {
-                RpcResponse obj=new RpcResponse();
+            if (responseCacheName != null && cacheEqual(responseCacheName, body)) {
+                RpcResponse obj = new RpcResponse();
                 obj.setRequestId(requestId);
                 obj.setAppResponse(responseCacheValue.getAppResponse());
                 obj.setClazz(responseCacheValue.getClazz());
                 obj.setException(responseCacheValue.getException());
 
                 out.add(obj);
-            }
-            else
-            {
-                RpcResponse obj=(RpcResponse) SerializeTool.deserialize(body, genericClass);
+            } else {
+                RpcResponse obj = (RpcResponse) SerializeTool.deserialize(body, genericClass);
                 obj.setRequestId(requestId);//设置requestId
                 out.add(obj);
 
-                responseCacheName=body;
-                responseCacheValue=new RpcResponse();
+                responseCacheName = body;
+                responseCacheValue = new RpcResponse();
                 responseCacheValue.setAppResponse(obj.getAppResponse());
                 responseCacheValue.setClazz(obj.getClazz());
                 responseCacheValue.setException(obj.getException());
 
             }
-        }
-        else if(genericClass.equals(RpcRequest.class))
-        {
-            int requestIdLength=in.readInt();//获取到requestId的长度
+        } else if (genericClass.equals(RpcRequest.class)) {
+            int requestIdLength = in.readInt();//获取到requestId的长度
 
-            byte[] requestIdBytes=new byte[requestIdLength];
+            byte[] requestIdBytes = new byte[requestIdLength];
             in.readBytes(requestIdBytes);
 
-            int bodyLength=dataLength-4-requestIdLength;
+            int bodyLength = dataLength - 4 - requestIdLength;
 
             byte[] body = new byte[bodyLength];
             in.readBytes(body);
-            String requestId=new String(requestIdBytes);
+            String requestId = new String(requestIdBytes);
 
-            if(requestCacheName!=null&&cacheEqual(requestCacheName,body))
-            {
-                RpcRequest obj=new RpcRequest();
+            if (requestCacheName != null && cacheEqual(requestCacheName, body)) {
+                RpcRequest obj = new RpcRequest();
                 obj.setClassName(requestCacheValue.getClassName());
                 obj.setContext(requestCacheValue.getContext());
                 obj.setMethodName(requestCacheValue.getMethodName());
@@ -106,48 +100,45 @@ public class RpcDecoder extends ByteToMessageDecoder {
 
                 out.add(obj);
 
-            }
-            else
-            {
-                RpcRequest obj=(RpcRequest) SerializeTool.deserialize(body, genericClass);
+            } else {
+                RpcRequest obj = (RpcRequest) SerializeTool.deserialize(body, genericClass);
                 obj.setRequestId(requestId);//设置requestId
                 out.add(obj);
 
-                requestCacheName=body;
-                requestCacheValue=new RpcRequest();
+                requestCacheName = body;
+                requestCacheValue = new RpcRequest();
                 requestCacheValue.setClassName(obj.getClassName());
                 requestCacheValue.setContext(obj.getContext());
                 requestCacheValue.setMethodName(obj.getMethodName());
                 requestCacheValue.setParameters(obj.getParameters());
                 requestCacheValue.setParameterTypes(obj.getParameterTypes());
             }
-        }
-        else
-        {
+        } else {
             byte[] body = new byte[dataLength];
             in.readBytes(body);
-            Object obj= SerializeTool.deserialize(body, genericClass);
+            Object obj = SerializeTool.deserialize(body, genericClass);
             out.add(obj);
         }
     }
-    private static boolean cacheEqual(byte[] data1,byte[] data2)
-    {
-        if(data1==null)
-        {
-            if(data2!=null)
-                return false;
-        }
-        else
-        {
-            if(data2==null)
-                return false;
 
-            if(data1.length!=data2.length)
+    private static boolean cacheEqual(byte[] data1, byte[] data2) {
+        if (data1 == null) {
+            if (data2 != null) {
                 return false;
+            }
+        } else {
+            if (data2 == null) {
+                return false;
+            }
+
+            if (data1.length != data2.length) {
+                return false;
+            }
 
             for (int i = 0; i < data1.length; i++) {
-                if(data1[i]!=data2[i])
+                if (data1[i] != data2[i]) {
                     return false;
+                }
             }
         }
         return true;

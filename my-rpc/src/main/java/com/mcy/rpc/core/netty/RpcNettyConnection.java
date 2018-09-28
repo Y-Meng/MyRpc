@@ -46,10 +46,6 @@ public class RpcNettyConnection implements RpcConnection {
 
     private boolean connected = false;
 
-    RpcNettyConnection() {
-
-    }
-
     public RpcNettyConnection(String host, int port) {
         inetAddr = new InetSocketAddress(host, port);
         handle = new RpcClientHandler(this);
@@ -71,8 +67,6 @@ public class RpcNettyConnection implements RpcConnection {
                         public void initChannel(SocketChannel channel) throws Exception {
                             channel.pipeline().addLast(new RpcDecoder(RpcResponse.class));
                             channel.pipeline().addLast(new RpcEncoder(RpcRequest.class));
-//                    	channel.pipeline().addLast(new FSTNettyEncode());
-//                    	channel.pipeline().addLast(new FSTNettyDecode());
                             channel.pipeline().addLast(handle);
                         }
                     })
@@ -91,17 +85,6 @@ public class RpcNettyConnection implements RpcConnection {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        /*
-        ChannelFuture future=bootstrap.connect(this.inetAddr);
-		future.addListener(new ChannelFutureListener(){
-			@Override
-			public void operationComplete(ChannelFuture cfuture) throws Exception {
-				 Channel channel = cfuture.channel();
-				 //添加进入连接数组
-			     channels.put(channel.remoteAddress().toString(), channel);
-			     System.out.println(channel.remoteAddress().toString());
-			}
-		});*/
     }
 
     @Override
@@ -118,7 +101,8 @@ public class RpcNettyConnection implements RpcConnection {
     }
 
     @Override
-    public Object Send(RpcRequest request, boolean async) {
+    public Object send(RpcRequest request, boolean async) {
+
         if (channel == null) {
             channel = getChannel(inetAddr.toString());
         }
@@ -223,14 +207,15 @@ public class RpcNettyConnection implements RpcConnection {
 
     @Override
     public List<InvokeFuture<Object>> getFutures(String method) {
-        List<InvokeFuture<Object>> list = new ArrayList<InvokeFuture<Object>>();
+
+        List<InvokeFuture<Object>> list = new ArrayList<>();
 
         Iterator<Map.Entry<String, InvokeFuture<Object>>> it = futrues.entrySet().iterator();
         String methodName = null;
         InvokeFuture<Object> temp = null;
         while (it.hasNext()) {
-            Map.Entry<String, InvokeFuture<Object>> entry = it.next();
 
+            Map.Entry<String, InvokeFuture<Object>> entry = it.next();
 
             methodName = entry.getValue().getMethod();
             temp = entry.getValue();
