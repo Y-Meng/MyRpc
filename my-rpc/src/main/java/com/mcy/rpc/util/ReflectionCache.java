@@ -15,8 +15,8 @@ public class ReflectionCache {
 
 //    private static final LRUMap<String, Method> METHOD_CACHE = new LRUMap<String, Method>(1024);
 
-    /** 实际使用方法缓存多线程读远大于写，无需强制保证同步 */
-    private static Map<String, Method> METHOD_CACHE = new HashMap<>();
+    /** 实际使用方法数量不会太大 */
+    private static Map<String, Method> METHOD_CACHE = new HashMap<>(1024);
     /**
      * 获取缓存的Method
      *
