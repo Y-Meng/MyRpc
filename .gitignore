@@ -6,3 +6,4 @@ my-rpc/my-rpc.iml
 my-rpc/.idea/vcs.xml
 my-rpc/.idea/misc.xml
 my-rpc/target/
+*.xml
